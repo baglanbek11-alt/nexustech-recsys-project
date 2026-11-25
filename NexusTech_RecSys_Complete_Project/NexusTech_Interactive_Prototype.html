@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus Tech — Интерактивный прототип интернет-магазина с рекомендательной системой</title>
+<style>
+  body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background: #f4f6f9; color: #1e293b; }
+  header { background: #0f172a; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .nav-tabs { display: flex; gap: 8px; flex-wrap: wrap; background: #1e293b; padding: 10px 24px; }
+  .tab-btn { background: #334155; color: #e2e8f0; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .tab-btn.active { background: #2563eb; color: #fff; font-weight: 600; }
+  .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+  .screen { display: none; background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+  .screen.active { display: block; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-top: 16px; }
+  .card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; background: #f8fafc; display: flex; flex-direction: column; justify-content: space-between; }
+  .badge { display: inline-block; background: #dbeafe; color: #1d4ed8; font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600; margin-bottom: 6px; }
+  .reason { font-size: 12px; color: #059669; background: #ecfdf5; padding: 6px; border-radius: 6px; margin-top: 8px; }
+  .btn { background: #2563eb; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; margin-top: 10px; font-weight: 600; }
+  .btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+  .controls { display: flex; gap: 12px; align-items: center; background: #e2e8f0; padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+  th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }
+  th { background: #f1f5f9; }
+</style>
+</head>
+<body>
+<header>
+  <div><strong>NEXUS TECH</strong> — Архитектура e-commerce с рекомендательной системой</div>
+  <div>
+    Режим просмотра:
+    <select id="personaSelect" onchange="renderAll()" style="padding:5px; border-radius:5px;">
+      <option value="GUEST">Гость (Без истории / Cold Start)</option>
+      <option value="USR01" selected>USR01 — Айдар Нурланов (GRP01: Умный дом)</option>
+      <option value="USR03">USR03 — Тимур Сериков (GRP02: ПК и Гейминг)</option>
+    </select>
+    <label style="margin-left:12px; font-size:13px;">
+      <input type="checkbox" id="consentToggle" checked onchange="renderAll()"> Персонализация включена
+    </label>
+  </div>
+</header>
+
+<div class="nav-tabs">
+  <button class="tab-btn active" onclick="showScreen('s1', this)">1. Главная страница</button>
+  <button class="tab-btn" onclick="showScreen('s2', this)">2. Каталог и фильтры</button>
+  <button class="tab-btn" onclick="showScreen('s3', this)">3. Карточка товара</button>
+  <button class="tab-btn" onclick="showScreen('s4', this)">4. Корзина и заказ</button>
+  <button class="tab-btn" onclick="showScreen('s5', this)">5. Управление предпочтениями</button>
+  <button class="tab-btn" onclick="showScreen('s6', this)">6. Админ-панель и веса</button>
+</div>
+
+<div class="container">
+  <div id="s1" class="screen active">
+    <h2 id="homeTitle">Персональная витрина</h2>
+    <p id="homeSub" style="color:#475569;"></p>
+    <div class="grid" id="homeRecs"></div>
+  </div>
+
+  <div id="s2" class="screen">
+    <h2>Каталог товаров (8 категорий / 24 подкатегории)</h2>
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="Поиск по названию..." oninput="renderCatalog()" style="padding:7px; width:240px;">
+      <select id="catFilter" onchange="renderCatalog()" style="padding:7px;">
+        <option value="ALL">Все категории</option>
+        <option value="CAT01">CAT01 — Умный дом</option>
+        <option value="CAT02">CAT02 — Компьютеры и ПК</option>
+        <option value="CAT06">CAT06 — Климат и уборка</option>
+        <option value="CAT08">CAT08 — Гейминг и VR</option>
+      </select>
+      <label><input type="checkbox" id="inStockOnly" checked onchange="renderCatalog()"> Только в наличии</label>
+    </div>
+    <div class="grid" id="catalogGrid"></div>
+  </div>
+
+  <div id="s3" class="screen">
+    <h2>Карточка товара: Центры и устройства умного дома</h2>
+    <div class="card" style="max-width:560px;">
+      <div>
+        <span class="badge">PRD018 • CAT01 / SUB03</span>
+        <h3>Центр умного дома Zigbee/Matter Aqara S118</h3>
+        <p>Поддержка до 128 устройств, Ethernet + Wi-Fi, локальные сценарии автоматизации.</p>
+        <p><strong>Цена:</strong> 34 900 ₸ | <strong>Остаток:</strong> 18 шт.</p>
+      </div>
+      <button class="btn" onclick="addToCart('PRD018', 'Центр умного дома Zigbee/Matter Aqara S118', 34900)">Добавить в корзину (+0.14 к PRF01)</button>
+    </div>
+    <h3 style="margin-top:24px;">Связанные товары (Матрица Товар × Товар)</h3>
+    <div class="grid" id="relatedGrid"></div>
+  </div>
+
+  <div id="s4" class="screen">
+    <h2>Корзина и оформление заказа</h2>
+    <div id="cartContent">Корзина пуста. Добавьте товары из витрины или карточки.</div>
+  </div>
+
+  <div id="s5" class="screen">
+    <h2>Личный кабинет: Управление предпочтениями</h2>
+    <p>Пользователь может явно скорректировать коэффициенты интересов (шкала от -1.0 до +1.0) или отключить персонализацию.</p>
+    <table>
+      <thead><tr><th>Код</th><th>Признак предпочтения</th><th>Текущий вес</th><th>Действие</th></tr></thead>
+      <tbody id="prefTableBody"></tbody>
+    </table>
+  </div>
+
+  <div id="s6" class="screen">
+    <h2>Административная панель: Настройка гибридного ранжирования</h2>
+    <p>Формула оценки: <code>Score = w1 * S_pers + w2 * S_item + w3 * S_grp</code></p>
+    <div class="controls">
+      <label>w1 (Личный профиль): <input type="number" step="0.05" id="w1" value="0.50" style="width:65px;"></label>
+      <label>w2 (Связь товаров): <input type="number" step="0.05" id="w2" value="0.30" style="width:65px;"></label>
+      <label>w3 (Группа×Категория): <input type="number" step="0.05" id="w3" value="0.20" style="width:65px;"></label>
+      <button class="btn" style="margin-top:0;" onclick="renderAll()">Пересчитать рекомендации</button>
+    </div>
+    <p style="font-size:13px; color:#475569;">Товары с остатком <code>stock = 0</code> (например, PRD017, PRD044) и статусом «Архив» автоматически исключаются из выдачи.</p>
+  </div>
+</div>
+
+<script>
+const sampleProducts = [
+  {id: "PRD018", name: "Центр умного дома Zigbee/Matter Aqara", cat: "CAT01", price: 34900, stock: 18, s_pers: 0.96, s_item: 0.95, s_grp: 0.92, reason: "Высокое совпадение с PRF01 и PRF11 (Умный дом)"},
+  {id: "PRD009", name: "Датчик движения и освещённости Yeelight", cat: "CAT01", price: 11500, stock: 42, s_pers: 0.94, s_item: 0.92, s_grp: 0.92, reason: "Совместимо с вашим хабом (REL_COMPAT = 0.92)"},
+  {id: "PRD002", name: "Светодиодная лента Matter Xiaomi", cat: "CAT01", price: 18900, stock: 27, s_pers: 0.91, s_item: 0.88, s_grp: 0.92, reason: "Популярный выбор группы GRP01"},
+  {id: "PRD126", name: "Робот-пылесос LiDAR Slim Roborock", cat: "CAT06", price: 165000, stock: 9, s_pers: 0.86, s_item: 0.82, s_grp: 0.91, reason: "Интеграция в экосистему умного дома (CAT06)"},
+  {id: "PRD030", name: "Ультрабук Pro 14 Asus Workstation", cat: "CAT02", price: 420000, stock: 6, s_pers: 0.58, s_item: 0.35, s_grp: 0.22, reason: "Рекомендовано для группы GRP02 (ПК и работа)"},
+  {id: "PRD182", name: "Игровая консоль NextGen 1TB Sony", cat: "CAT08", price: 285000, stock: 11, s_pers: 0.42, s_item: 0.10, s_grp: 0.05, reason: "Лидер продаж в категории Гейминг (CAT08)"},
+  {id: "PRD017", name: "Умный диммер настенный Sonoff (Нет в наличии)", cat: "CAT01", price: 9800, stock: 0, s_pers: 0.90, s_item: 0.85, s_grp: 0.92, reason: "Исключён из рекомендаций: stock = 0"}
+];
+
+let cart = [];
+let prefs = [
+  {code: "PRF01", name: "Умный дом и автоматизация", val: 1.00},
+  {code: "PRF02", name: "Компьютеры и рабочее место", val: 0.20},
+  {code: "PRF06", name: "Климат и уборка", val: 0.82},
+  {code: "PRF08", name: "Гейминг и VR", val: -0.20},
+  {code: "PRF11", name: "Экосистемность (Wi-Fi/Zigbee)", val: 1.00}
+];
+
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function addToCart(id, name, price) {
+  cart.push({id, name, price});
+  alert("Товар добавлен в корзину! Обновлён профиль предпочтений.");
+  renderCart();
+}
+
+function renderCart() {
+  const el = document.getElementById('cartContent');
+  if (cart.length === 0) {
+    el.innerHTML = "<p>Корзина пуста. Добавьте товары из каталога.</p>";
+    return;
+  }
+  let total = cart.reduce((s, x) => s + x.price, 0);
+  el.innerHTML = "<ul>" + cart.map(c => `<li>${c.name} — <strong>${c.price.toLocaleString()} ₸</strong></li>`).join("") +
+    `</ul><p><strong>Итого к оплате: ${total.toLocaleString()} ₸</strong></p><button class="btn" onclick="cart=[];renderCart();alert('Заказ успешно оформлен!');">Оформить и оплатить заказ</button>`;
+}
+
+function renderAll() {
+  const persona = document.getElementById('personaSelect').value;
+  const consent = document.getElementById('consentToggle').checked;
+  const w1 = parseFloat(document.getElementById('w1').value) || 0.5;
+  const w2 = parseFloat(document.getElementById('w2').value) || 0.3;
+  const w3 = parseFloat(document.getElementById('w3').value) || 0.2;
+
+  const available = sampleProducts.filter(p => p.stock > 0);
+  let ranked = [];
+
+  if (persona === "GUEST" || !consent) {
+    document.getElementById('homeTitle').textContent = "Популярные товары и хиты продаж (Резервный алгоритм Cold Start)";
+    document.getElementById('homeSub').textContent = "Персонализация отключена или история посещений отсутствует.";
+    ranked = [...available].reverse();
+  } else if (persona === "USR03") {
+    document.getElementById('homeTitle').textContent = "Персональная витрина для Тимура Серикова (USR03 • Группа GRP02)";
+    document.getElementById('homeSub').textContent = "Приоритет категорий CAT02 (Компьютеры) и CAT08 (Гейминг).";
+    ranked = [...available].sort((a,b) => (b.cat === "CAT02" || b.cat === "CAT08") - (a.cat === "CAT02" || a.cat === "CAT08"));
+  } else {
+    document.getElementById('homeTitle').textContent = "Персональная витрина для Айдара Нурланова (USR01 • Группа GRP01)";
+    document.getElementById('homeSub').textContent = `Гибридный расчёт с весами w1=${w1}, w2=${w2}, w3=${w3}.`;
+    ranked = available.map(p => ({
+      ...p,
+      totalScore: (w1 * p.s_pers + w2 * p.s_item + w3 * p.s_grp).toFixed(4)
+    })).sort((a,b) => b.totalScore - a.totalScore);
+  }
+
+  document.getElementById('homeRecs').innerHTML = ranked.slice(0, 5).map((p, idx) => `
+    <div class="card">
+      <div>
+        <span class="badge">#${idx+1} • ${p.id} • ${p.cat}</span>
+        <h4>${p.name}</h4>
+        <p><strong>${p.price.toLocaleString()} ₸</strong> (остаток: ${p.stock})</p>
+        ${p.totalScore ? `<div style="font-size:12px;color:#1e40af;">Оценка полезности: <strong>${p.totalScore}</strong></div>` : ""}
+        <div class="reason">${persona === "GUEST" || !consent ? "Популярный товар каталога" : p.reason}</div>
+      </div>
+      <button class="btn" onclick="addToCart('${p.id}', '${p.name}', ${p.price})">В корзину</button>
+    </div>
+  `).join("");
+
+  document.getElementById('relatedGrid').innerHTML = available.slice(1, 4).map(p => `
+    <div class="card">
+      <div><span class="badge">${p.id}</span><h4>${p.name}</h4><p>${p.price.toLocaleString()} ₸</p></div>
+      <button class="btn" onclick="addToCart('${p.id}', '${p.name}', ${p.price})">Добавить</button>
+    </div>
+  `).join("");
+
+  renderCatalog();
+  renderPrefs();
+}
+
+function renderCatalog() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const cat = document.getElementById('catFilter').value;
+  const onlyStock = document.getElementById('inStockOnly').checked;
+  const filtered = sampleProducts.filter(p =>
+    (cat === "ALL" || p.cat === cat) &&
+    (!onlyStock || p.stock > 0) &&
+    p.name.toLowerCase().includes(q)
+  );
+  const grid = document.getElementById('catalogGrid');
+  if (filtered.length === 0) {
+    grid.innerHTML = "<p>По вашему запросу товары не найдены. Попробуйте сбросить фильтры.</p>";
+    return;
+  }
+  grid.innerHTML = filtered.map(p => `
+    <div class="card">
+      <div>
+        <span class="badge">${p.id} • ${p.cat}</span>
+        <h4>${p.name}</h4>
+        <p><strong>${p.price.toLocaleString()} ₸</strong> | Остаток: ${p.stock}</p>
+      </div>
+      <button class="btn" ${p.stock === 0 ? "disabled" : ""} onclick="addToCart('${p.id}', '${p.name}', ${p.price})">
+        ${p.stock === 0 ? "Нет в наличии" : "В корзину"}
+      </button>
+    </div>
+  `).join("");
+}
+
+function renderPrefs() {
+  document.getElementById('prefTableBody').innerHTML = prefs.map((pr, i) => `
+    <tr>
+      <td><strong>${pr.code}</strong></td>
+      <td>${pr.name}</td>
+      <td>${pr.val.toFixed(2)}</td>
+      <td>
+        <button onclick="prefs[${i}].val=Math.min(1, prefs[${i}].val+0.1);renderPrefs();">+0.1</button>
+        <button onclick="prefs[${i}].val=Math.max(-1, prefs[${i}].val-0.1);renderPrefs();">-0.1</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+renderAll();
+</script>
+</body>
+</html>
